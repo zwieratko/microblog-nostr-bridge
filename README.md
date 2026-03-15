@@ -2,11 +2,13 @@
 
 Automatically mirrors posts from a [micro.blog](https://micro.blog) JSON feed to the [Nostr](https://nostr.com) decentralized network.
 
-## How it works
+## Features
 
 `bridge.py` fetches the JSON feed from your micro.blog site, checks which posts have already been sent (tracked in `seen_posts.json`), and publishes any new ones as Nostr text notes (kind 1) to a configured list of relays.
 
 `inspect_nostr.py` is a diagnostic utility that fetches your most recent Nostr posts and displays any reactions or reposts they have received.
+
+`scan_nostr.py` scans all Nostr posts and prints only those that have received at least one reaction (like, repost, zap, etc.).
 
 ## Requirements
 
@@ -34,7 +36,7 @@ Edit `.env` and fill in your Nostr private key (see `.env.example` for details).
 
 **4. Run manually**
 ```bash
-uv run python bridge.py
+uv run bridge.py
 ```
 
 **5. Set up as a cron job** (e.g. check every 15 minutes)
@@ -49,7 +51,12 @@ crontab -e
 
 **Inspect your recent Nostr posts and reactions:**
 ```bash
-uv run python inspect_nostr.py
+uv run inspect_nostr.py
+```
+
+**Review all of your Nostr posts and print only those with reactions:**
+```bash
+uv run scan_nostr.py
 ```
 
 ## Configuration
@@ -62,16 +69,9 @@ All configuration is done in `bridge.py` at the top of the file:
 | `RELAYS` | List of Nostr relay WebSocket URLs |
 | `DB_FILE` | Path to the local post-tracking database (default: `seen_posts.json`) |
 
+## Security note
+
 Your Nostr private key is loaded from the `.env` file — never commit it to the repository.
-
-## Files
-
-| File | Description |
-|---|---|
-| `bridge.py` | Main bridge — fetches feed and publishes to Nostr |
-| `inspect_nostr.py` | Diagnostic tool — view recent posts and reactions |
-| `seen_posts.json` | Runtime state — tracks already-sent post IDs (auto-created, git-ignored) |
-| `.env` | Your secrets — never committed (git-ignored) |
 
 ## License
 
