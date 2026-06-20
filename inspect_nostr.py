@@ -2,13 +2,14 @@ import asyncio
 import os
 from datetime import timedelta
 from dotenv import load_dotenv
-from nostr_sdk import Client, Keys, Kind, NostrSigner, Filter, RelayUrl
+from nostr_sdk import Client, Keys, Kind, Filter, PublicKey, RelayUrl
 from config import RELAYS
 
 load_dotenv()
 
 # --- Configuration ---
 NSEC = os.getenv("NOSTR_NSEC")
+NPUB = os.getenv("NOSTR_NPUB")
 FETCH_LIMIT = 5  # Number of recent posts to inspect
 FETCH_TIMEOUT = 10  # Seconds to wait for events from relays
 REACTION_TIMEOUT = 5  # Seconds to wait for reactions per post
@@ -18,15 +19,22 @@ KIND_REPOST = Kind(6)
 KIND_REACTION = Kind(7)
 
 
+def resolve_pubkey() -> PublicKey | None:
+    """Resolve the user's public key from NOSTR_NPUB, or derive it from NOSTR_NSEC."""
+    if NPUB:
+        return PublicKey.parse(NPUB)
+    if NSEC:
+        return Keys.parse(NSEC).public_key()
+    return None
+
+
 async def main() -> None:
-    if not NSEC:
-        print("Error: NOSTR_NSEC is missing from .env")
+    pubkey = resolve_pubkey()
+    if pubkey is None:
+        print("Error: set NOSTR_NPUB or NOSTR_NSEC in .env")
         return
 
-    keys = Keys.parse(NSEC)
-    pubkey = keys.public_key()
-    signer = NostrSigner.keys(keys)
-    client = Client(signer)
+    client = Client()
 
     for relay_url in RELAYS:
         try:

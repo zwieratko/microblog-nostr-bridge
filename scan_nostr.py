@@ -22,7 +22,6 @@ from nostr_sdk import (
     Filter,
     Keys,
     Kind,
-    NostrSigner,
     PublicKey,
     RelayUrl,
     Timestamp,
@@ -32,6 +31,7 @@ load_dotenv()
 
 # --- Configuration ---
 NSEC = os.getenv("NOSTR_NSEC")
+NPUB = os.getenv("NOSTR_NPUB")
 BATCH_SIZE = 200  # Events per relay fetch call
 FETCH_TIMEOUT = 15  # Seconds to wait for events per batch
 REACTION_TIMEOUT = 10  # Seconds to wait for reactions per post
@@ -49,6 +49,15 @@ KIND_TEXT_NOTE = Kind(1)
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+
+def resolve_pubkey() -> PublicKey | None:
+    """Resolve the user's public key from NOSTR_NPUB, or derive it from NOSTR_NSEC."""
+    if NPUB:
+        return PublicKey.parse(NPUB)
+    if NSEC:
+        return Keys.parse(NSEC).public_key()
+    return None
 
 
 def parse_since(date_str: str) -> Timestamp:
@@ -173,14 +182,12 @@ async def fetch_reactions_bulk(client: Client, event_ids: list) -> dict:
 
 
 async def main(since_str: str | None, max_posts: int) -> None:
-    if not NSEC:
-        print("Error: NOSTR_NSEC is missing from .env")
+    pubkey = resolve_pubkey()
+    if pubkey is None:
+        print("Error: set NOSTR_NPUB or NOSTR_NSEC in .env")
         return
 
-    keys = Keys.parse(NSEC)
-    pubkey = keys.public_key()
-    signer = NostrSigner.keys(keys)
-    client = Client(signer)
+    client = Client()
 
     for relay_url in RELAYS:
         try:
