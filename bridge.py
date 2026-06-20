@@ -21,7 +21,8 @@ log = logging.getLogger(__name__)
 # --- Configuration ---
 JSON_FEED_URL = "https://micro.zwieratko.sk/feed.json"
 NSEC = os.getenv("NOSTR_NSEC")
-DB_FILE = "seen_posts.json"
+DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "seen_posts.json")
+MAX_POSTS_PER_RUN = 5  # Safety cap: max new posts published per cron run
 
 
 def get_seen_posts() -> set:
@@ -40,7 +41,7 @@ def get_seen_posts() -> set:
 
 
 def save_seen_posts(seen_set: set) -> None:
-    db_dir = os.path.dirname(os.path.abspath(DB_FILE))
+    db_dir = os.path.dirname(DB_FILE)
     with tempfile.NamedTemporaryFile("w", dir=db_dir, delete=False, suffix=".tmp") as f:
         json.dump(list(seen_set), f)
         tmp_path = f.name
@@ -81,8 +82,7 @@ async def send_post(client: Client, signer: NostrSigner, message: str) -> None:
         # Fallback for older nostr-sdk versions without send_event_builder
         log.debug("send_event_builder not available, falling back to manual signing")
         event = await signer.sign_event_builder(builder)
-        await client.send_event(event)
-        return
+        output = await client.send_event(event)
 
     if output.failed:
         for relay_url, reason in output.failed.items():
@@ -133,6 +133,14 @@ async def main() -> None:
 
         # Process oldest-first so seen_posts reflects chronological order
         for item in reversed(items):
+            if new_count >= MAX_POSTS_PER_RUN:
+                log.warning(
+                    "Reached MAX_POSTS_PER_RUN (%d) — remaining new posts will be "
+                    "published in subsequent runs",
+                    MAX_POSTS_PER_RUN,
+                )
+                break
+
             post_id = item.get("id")
             if not post_id or post_id in seen_posts:
                 continue
