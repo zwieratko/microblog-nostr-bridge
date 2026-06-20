@@ -9,8 +9,8 @@ load_dotenv()
 
 # --- Configuration ---
 NSEC = os.getenv("NOSTR_NSEC")
-FETCH_LIMIT = 5       # Number of recent posts to inspect
-FETCH_TIMEOUT = 10    # Seconds to wait for events from relays
+FETCH_LIMIT = 5  # Number of recent posts to inspect
+FETCH_TIMEOUT = 10  # Seconds to wait for events from relays
 REACTION_TIMEOUT = 5  # Seconds to wait for reactions per post
 
 KIND_TEXT_NOTE = Kind(1)
@@ -44,7 +44,9 @@ async def main() -> None:
         p_filter = Filter().author(pubkey).kind(KIND_TEXT_NOTE).limit(FETCH_LIMIT)
 
         try:
-            events = await client.fetch_events(p_filter, timedelta(seconds=FETCH_TIMEOUT))
+            events = await client.fetch_events(
+                p_filter, timedelta(seconds=FETCH_TIMEOUT)
+            )
             event_list = events.to_vec()
         except Exception as e:
             print(f"Error fetching posts: {e}")

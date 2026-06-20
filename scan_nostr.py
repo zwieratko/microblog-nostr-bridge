@@ -32,14 +32,14 @@ load_dotenv()
 
 # --- Configuration ---
 NSEC = os.getenv("NOSTR_NSEC")
-BATCH_SIZE = 200       # Events per relay fetch call
-FETCH_TIMEOUT = 15     # Seconds to wait for events per batch
+BATCH_SIZE = 200  # Events per relay fetch call
+FETCH_TIMEOUT = 15  # Seconds to wait for events per batch
 REACTION_TIMEOUT = 10  # Seconds to wait for reactions per post
 
 # Reaction kind numbers and their display labels
 REACTION_KINDS = {
-    6:    "Repost 🔄",
-    7:    "Like ❤️",
+    6: "Repost 🔄",
+    7: "Like ❤️",
     9735: "Zap ⚡",
 }
 
@@ -49,6 +49,7 @@ KIND_TEXT_NOTE = Kind(1)
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def parse_since(date_str: str) -> Timestamp:
     """Parse an ISO date string (YYYY-MM-DD) into a Nostr Timestamp."""
@@ -79,13 +80,16 @@ def content_preview(text: str, width: int = 120) -> str:
 # Fetch all posts (paginated)
 # ---------------------------------------------------------------------------
 
-async def fetch_all_posts(client: Client, pubkey: PublicKey, since: Timestamp, max_posts: int):
+
+async def fetch_all_posts(
+    client: Client, pubkey: PublicKey, since: Timestamp, max_posts: int
+):
     """
     Fetch text notes in reverse-chronological batches until no new events
     are returned or max_posts is reached.
     """
-    all_events = {}   # id_hex -> event (dedup across batches)
-    until = None      # Start from now, move backwards
+    all_events = {}  # id_hex -> event (dedup across batches)
+    until = None  # Start from now, move backwards
 
     print(f"Fetching posts (batch size: {BATCH_SIZE}, max: {max_posts}) ...")
 
@@ -132,6 +136,7 @@ async def fetch_all_posts(client: Client, pubkey: PublicKey, since: Timestamp, m
 # Fetch reactions for a list of event IDs in one query
 # ---------------------------------------------------------------------------
 
+
 async def fetch_reactions_bulk(client: Client, event_ids: list) -> dict:
     """
     Returns a dict: event_id_hex -> list of reaction events.
@@ -165,6 +170,7 @@ async def fetch_reactions_bulk(client: Client, event_ids: list) -> dict:
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 async def main(since_str: str | None, max_posts: int) -> None:
     if not NSEC:
@@ -208,8 +214,7 @@ async def main(since_str: str | None, max_posts: int) -> None:
 
         # Step 3: Print only posts that have at least one reaction
         posts_with_reactions = [
-            p for p in all_posts
-            if p.id().to_hex() in reactions_by_post
+            p for p in all_posts if p.id().to_hex() in reactions_by_post
         ]
 
         print(f"Posts with reactions: {len(posts_with_reactions)} / {len(all_posts)}")

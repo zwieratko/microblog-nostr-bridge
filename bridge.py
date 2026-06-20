@@ -89,9 +89,7 @@ async def send_post(client: Client, signer: NostrSigner, message: str) -> None:
             log.warning("Relay %s rejected event: %s", relay_url, reason)
 
     if not output.success:
-        raise RuntimeError(
-            "Event not accepted by any relay — see relay warnings above"
-        )
+        raise RuntimeError("Event not accepted by any relay — see relay warnings above")
 
     log.debug(
         "Event %s confirmed by %d/%d relay(s)",
