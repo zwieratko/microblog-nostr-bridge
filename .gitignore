@@ -17,6 +17,9 @@ cron.*
 seen_*
 *.log
 
+# Runtime lock file
+bridge.lock
+
 # macOS
 .DS_Store
 
