@@ -1,4 +1,5 @@
 import asyncio
+import fcntl
 import json
 import logging
 import os
@@ -22,6 +23,7 @@ log = logging.getLogger(__name__)
 JSON_FEED_URL = "https://micro.zwieratko.sk/feed.json"
 NSEC = os.getenv("NOSTR_NSEC")
 DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "seen_posts.json")
+LOCK_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bridge.lock")
 MAX_POSTS_PER_RUN = 5  # Safety cap: max new posts published per cron run
 
 
@@ -104,6 +106,17 @@ async def main() -> None:
         log.error("Missing NOSTR_NSEC in .env — aborting")
         return
 
+    with open(LOCK_FILE, "w") as lock_fh:
+        try:
+            fcntl.flock(lock_fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            log.warning("Another instance is already running — skipping this run")
+            return
+
+        await _run()
+
+
+async def _run() -> None:
     keys = Keys.parse(NSEC)
     signer = NostrSigner.keys(keys)
     client = Client(signer)
