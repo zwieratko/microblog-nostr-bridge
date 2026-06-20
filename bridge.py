@@ -1,12 +1,14 @@
 import asyncio
-import requests
 import json
 import logging
 import os
+import requests
+import tempfile
 import time
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 from nostr_sdk import Client, Keys, NostrSigner, RelayUrl, EventBuilder
+from config import RELAYS
 
 load_dotenv()
 
@@ -20,24 +22,30 @@ log = logging.getLogger(__name__)
 # --- Configuration ---
 JSON_FEED_URL = "https://micro.zwieratko.sk/feed.json"
 NSEC = os.getenv("NOSTR_NSEC")
-RELAYS = ["wss://nos.lol", "wss://relay.damus.io", "wss://relay.snort.social"]
 DB_FILE = "seen_posts.json"
 
 
 def get_seen_posts() -> set:
-    if os.path.exists(DB_FILE):
-        with open(DB_FILE, "r") as f:
-            try:
-                return set(json.load(f))
-            except (json.JSONDecodeError, ValueError) as e:
-                log.warning("Could not parse %s, starting fresh: %s", DB_FILE, e)
-                return set()
-    return set()
+    if not os.path.exists(DB_FILE):
+        return set()
+    with open(DB_FILE, "r") as f:
+        try:
+            return set(json.load(f))
+        except (json.JSONDecodeError, ValueError) as e:
+            corrupt_path = DB_FILE + ".corrupt"
+            os.replace(DB_FILE, corrupt_path)
+            raise RuntimeError(
+                f"Corrupt DB file renamed to {corrupt_path} — "
+                f"inspect it and delete it to start fresh. Original error: {e}"
+            )
 
 
 def save_seen_posts(seen_set: set) -> None:
-    with open(DB_FILE, "w") as f:
+    db_dir = os.path.dirname(os.path.abspath(DB_FILE))
+    with tempfile.NamedTemporaryFile("w", dir=db_dir, delete=False, suffix=".tmp") as f:
         json.dump(list(seen_set), f)
+        tmp_path = f.name
+    os.replace(tmp_path, DB_FILE)
 
 
 def clean_html(html_content: str) -> str:
@@ -64,15 +72,34 @@ def clean_html(html_content: str) -> str:
 
 async def send_post(client: Client, signer: NostrSigner, message: str) -> None:
     """Build and send a Nostr text note. Tries send_event_builder first,
-    falls back to manual signing if the method is unavailable."""
+    falls back to manual signing if the method is unavailable.
+
+    Raises RuntimeError if the event was not accepted by any relay."""
     builder = EventBuilder.text_note(message)
     try:
-        await client.send_event_builder(builder)
+        output = await client.send_event_builder(builder)
     except AttributeError:
         # Fallback for older nostr-sdk versions without send_event_builder
         log.debug("send_event_builder not available, falling back to manual signing")
         event = await signer.sign_event_builder(builder)
         await client.send_event(event)
+        return
+
+    if output.failed:
+        for relay_url, reason in output.failed.items():
+            log.warning("Relay %s rejected event: %s", relay_url, reason)
+
+    if not output.success:
+        raise RuntimeError(
+            "Event not accepted by any relay — see relay warnings above"
+        )
+
+    log.debug(
+        "Event %s confirmed by %d/%d relay(s)",
+        output.id,
+        len(output.success),
+        len(output.success) + len(output.failed),
+    )
 
 
 async def main() -> None:
