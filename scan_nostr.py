@@ -19,7 +19,6 @@ from dotenv import load_dotenv
 from config import RELAYS
 from nostr_sdk import (
     Client,
-    EventId,
     Filter,
     Keys,
     Kind,
@@ -274,7 +273,7 @@ if __name__ == "__main__":
         "--limit",
         metavar="N",
         type=int,
-        help=f"Maximum number of posts to fetch (default: 2000)",
+        help="Maximum number of posts to fetch (default: 2000)",
         default=2000,
     )
     args = parser.parse_args()

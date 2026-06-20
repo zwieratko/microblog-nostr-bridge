@@ -4,7 +4,6 @@ import logging
 import os
 import requests
 import tempfile
-import time
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 from nostr_sdk import Client, Keys, NostrSigner, RelayUrl, EventBuilder
