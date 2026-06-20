@@ -3,12 +3,12 @@ import os
 from datetime import timedelta
 from dotenv import load_dotenv
 from nostr_sdk import Client, Keys, Kind, NostrSigner, Filter, RelayUrl
+from config import RELAYS
 
 load_dotenv()
 
 # --- Configuration ---
 NSEC = os.getenv("NOSTR_NSEC")
-RELAYS = ["wss://nos.lol", "wss://relay.damus.io", "wss://relay.primal.net"]
 FETCH_LIMIT = 5       # Number of recent posts to inspect
 FETCH_TIMEOUT = 10    # Seconds to wait for events from relays
 REACTION_TIMEOUT = 5  # Seconds to wait for reactions per post

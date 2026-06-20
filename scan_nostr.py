@@ -16,6 +16,7 @@ import os
 from datetime import datetime, timezone, timedelta
 
 from dotenv import load_dotenv
+from config import RELAYS
 from nostr_sdk import (
     Client,
     EventId,
@@ -32,8 +33,6 @@ load_dotenv()
 
 # --- Configuration ---
 NSEC = os.getenv("NOSTR_NSEC")
-RELAYS = ["wss://nos.lol", "wss://relay.damus.io", "wss://relay.primal.net"]
-
 BATCH_SIZE = 200       # Events per relay fetch call
 FETCH_TIMEOUT = 15     # Seconds to wait for events per batch
 REACTION_TIMEOUT = 10  # Seconds to wait for reactions per post
