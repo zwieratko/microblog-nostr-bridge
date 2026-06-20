@@ -19,3 +19,7 @@ seen_*
 
 # macOS
 .DS_Store
+
+# OpenCode config files
+opencode.json
+AGENTS.md
