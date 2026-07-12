@@ -61,13 +61,12 @@ uv run scan_nostr.py
 
 ## Configuration
 
-All configuration is done in `bridge.py` at the top of the file:
-
-| Variable | Description |
-|---|---|
-| `JSON_FEED_URL` | Your micro.blog JSON feed URL |
-| `RELAYS` | List of Nostr relay WebSocket URLs |
-| `DB_FILE` | Path to the local post-tracking database (default: `seen_posts.json`) |
+| File | Variable | Description |
+|---|---|---|
+| `config.py` | `RELAYS` | List of Nostr relay WebSocket URLs (shared by all scripts) |
+| `bridge.py` | `JSON_FEED_URL` | Your micro.blog JSON feed URL |
+| `bridge.py` | `DB_FILE` | Path to the local post-tracking database (default: `seen_posts.json`) |
+| `bridge.py` | `MAX_POSTS_PER_RUN` | Max. number of new posts published per run |
 
 ## Security note
 
