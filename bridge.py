@@ -63,7 +63,9 @@ def clean_html(html_content: str) -> str:
             a.replace_with(f"{a.get_text()} ({href})")
 
     # Collect image URLs and append them at the end
-    image_urls = [img.get("src") for img in soup.find_all("img") if img.get("src")]
+    image_urls = [
+        src for img in soup.find_all("img") if isinstance(src := img.get("src"), str)
+    ]
     text = soup.get_text(separator="\n").strip()
 
     if image_urls:
@@ -117,6 +119,7 @@ async def main() -> None:
 
 
 async def _run() -> None:
+    assert NSEC is not None  # guaranteed by the check in main()
     keys = Keys.parse(NSEC)
     signer = NostrSigner.keys(keys)
     client = Client(signer)

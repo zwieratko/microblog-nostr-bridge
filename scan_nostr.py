@@ -136,6 +136,7 @@ async def fetch_all_posts(
             break
 
         # Move the window back: set until = oldest timestamp - 1 second
+        assert oldest_ts is not None  # batch was non-empty, so this was set above
         until = Timestamp.from_secs(oldest_ts - 1)
 
     return list(all_events.values())
