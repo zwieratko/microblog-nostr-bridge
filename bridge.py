@@ -85,7 +85,7 @@ async def send_post(client: Client, signer: NostrSigner, message: str) -> None:
     except AttributeError:
         # Fallback for older nostr-sdk versions without send_event_builder
         log.debug("send_event_builder not available, falling back to manual signing")
-        event = await signer.sign_event_builder(builder)
+        event = await client.sign_event_builder(builder)
         output = await client.send_event(event)
 
     if output.failed:
